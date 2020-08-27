@@ -44,6 +44,40 @@ class NotesService {
 		return $note;
 	}
 
+	public function search(string $userId, string $search) : array {
+		$terms = preg_split('/\s+/', strtolower($search));
+		$notes = $this->getAll($userId)['notes'];
+		return array_values(array_filter(
+			$notes,
+			function (Note $note) use ($terms) : bool {
+				$d = $note->getData();
+				return $this->searchTermsInData(
+					array_map(
+						'strtolower',
+						[ $d['title'], $d['category'], $d['content'] ]
+					),
+					$terms
+				);
+			}
+		));
+	}
+	private function searchTermsInData(array $strings, array $terms) : bool {
+		foreach ($terms as $term) {
+			if (!$this->searchTermInData($strings, $term)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	private function searchTermInData(array $strings, string $term) : bool {
+		foreach ($strings as $str) {
+			if (strpos($str, $term) !== false) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	/**
 	 * @throws \OCP\Files\NotPermittedException
